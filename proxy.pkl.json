@@ -1,0 +1,12 @@
+{
+	"help":"This is a dict saving proxies_tested/proxies_alive/proxies_work_on_instagram. ",
+	"proxies": [
+		{
+			"ip:port": "xxx.xxx.xxx.xxx:yyyy",
+			"status" : "alive", // alive/dead/unknown/
+			"status_for_projects" : "alive", // alive/dead/unknown/
+			// "updated time": ""
+		},
+	]
+
+}

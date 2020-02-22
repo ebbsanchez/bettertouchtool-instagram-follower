@@ -4,6 +4,7 @@ import json
 from spiderlib import utils
 import random
 import pickle
+import sys
 
 headers = {
     "accept": "*/*",
@@ -38,10 +39,16 @@ def get_ld_json(soup):
 
 
 def main(username):
-    proxy_list = utils.getNewProxies(limit=5, last_check=120, https=True)
-    if 'http://pubproxy.com/#premium' in proxy_list[0]:
-        print("[!] Reach Max Request")
-    
+    # proxy_list = utils.getNewProxies(limit=5, last_check=120, https=True)
+    # if 'http://pubproxy.com/#premium' in proxy_list[0]:
+        # print("[!] Reach Max Request")
+    try:
+        with open('last_output.pkl','rb') as f:
+            raw = pickle.load(f)            
+            print(json.dumps(raw))
+    except FileNotFoundError as e:
+        pass
+
     global disk_proxies
     with open('proxies.pkl', 'rb') as f:
         disk_proxies = pickle.load(f)
@@ -68,7 +75,7 @@ def main(username):
             # LOG # print(e.__class__.__name__)
             # LOG # print("[{}]Proxy '{}' isn't work. try next.\n".format(try_count, proxy))
             if 'http://pubproxy.com/#premium' in proxy:
-                print("[X] Reach Max Request, disk proxies not working neither.")
+                # LOG # print("[X] Reach Max Request, disk proxies not working neither.")
                 exit()
             proxy_list.remove(proxy)
             try_count += 1
@@ -76,12 +83,12 @@ def main(username):
         except IndexError as e:
             if debugflag == 1:
                 print('what?? pickle might went wrong.')
-            print("[*] Run out of proxy.. need to fetch again. ({})".format(e))
+            # LOG # print("[*] Run out of proxy.. need to fetch again. ({})".format(e))
             proxy_list = utils.getNewProxies(limit=5, last_check=60)
             proxy_list = [
                 proxy for proxy in proxy_list if proxy not in used_proxy]
             if len(proxy_list) == 0:
-                print("[X] Run out of proxy.")
+                # LOG # print("[X] Run out of proxy.")
                 exit()
             continue
         except SSLError as e:
@@ -105,10 +112,14 @@ def main(username):
             print(e)
 
     icon_path = '/Users/pc1/Documents/Python/btt/instagram_followers/instagram.png'
-    raw = {"text": followers_count,
+    raw = {"text": str(followers_count),
            "icon_path": icon_path,
            "font_size": 15}
 
+    with open('last_output.pkl','wb') as f:
+        pickle.dump(raw, f)
+
+    # os.system('clear')
     return json.dumps(raw)
 
 
@@ -122,4 +133,5 @@ def testIfAlive(username='sa_____h'):
 
 if __name__ == '__main__':
     username = 'sa_____h'
-    print(main(username))
+    # print(main(username))
+    main(username)
