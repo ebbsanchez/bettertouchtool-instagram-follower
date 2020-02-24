@@ -14,13 +14,14 @@ class IgSpider:
     def __init__(self):
         logging.info('Starting Spider.')
 
+
     def get_followers_count(self, username):
         logging.info('Start getting followers count.')
         try: # own ip (without proxy)
             
             logging.info('Using own ip...')
-            # self.request_followers(username)
-            raise AttributeError # just for testing. must be deleted.
+            self.request_followers(username)
+            # raise AttributeError # just for testing. must be deleted.
         except AttributeError as e:
             # Now use proxies
             logging.info('[X]Failed with own ip...')
@@ -82,7 +83,37 @@ class IgSpider:
             "".join(soup.find("script", {"type": "application/ld+json"}).contents))
         return result_json
 
-def btt_logic():
+# def btt_logic(): # NameError: name 'proxyman' is not definedline 30, in get_followers_count, proxies = proxyman.return_proxies(limit=10)
+#     #  Read last output and update BTT
+#     try:
+#         with open('last_output.pkl','rb') as f:
+#             raw = pickle.load(f)            
+#             print(json.dumps(raw))
+#     except FileNotFoundError as e:
+#         pass
+
+#     # Try to get newest followers_count (it might take long)
+#     proxyman = ProxyCollector(filename='proxies')
+#     spider = IgSpider(proxyman=proxyman)
+#     username = 'sa_____h'
+#     followers_count = spider.get_followers_count(username)
+#     updated_time = datetime.strftime(datetime.now(), "%H:%M")
+    
+#     # Formated for btt 
+#     icon_path = '/Users/pc1/Documents/Python/btt/instagram_followers/instagram.png'
+#     raw = {"text": "{} ({})".format(str(followers_count),updated_time),
+#            "icon_path": icon_path,
+#            "font_size": 15}
+    
+#     # Write to pickle for next display
+#     with open('last_output.pkl','wb') as f:
+#         pickle.dump(raw, f)
+    
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    logging.info('logging is up.')
     #  Read last output and update BTT
     try:
         with open('last_output.pkl','rb') as f:
@@ -92,8 +123,8 @@ def btt_logic():
         pass
 
     # Try to get newest followers_count (it might take long)
-    spider = IgSpider()
     proxyman = ProxyCollector(filename='proxies')
+    spider = IgSpider()
     username = 'sa_____h'
     followers_count = spider.get_followers_count(username)
     updated_time = datetime.strftime(datetime.now(), "%H:%M")
@@ -107,12 +138,8 @@ def btt_logic():
     # Write to pickle for next display
     with open('last_output.pkl','wb') as f:
         pickle.dump(raw, f)
-    
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.CRITICAL)
-    btt_logic()
     # spider = IgSpider()
     # proxyman = ProxyCollector(filename='proxies')
     # username = 'sa_____h'
