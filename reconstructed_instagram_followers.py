@@ -6,6 +6,7 @@ import random
 import pickle
 import logging
 from proxy_collector import ProxyCollector
+from datetime import datetime
 
 
 
@@ -95,10 +96,11 @@ def btt_logic():
     proxyman = ProxyCollector(filename='proxies')
     username = 'sa_____h'
     followers_count = spider.get_followers_count(username)
+    updated_time = datetime.strftime(datetime.now(), "%H:%M")
     
     # Formated for btt 
     icon_path = '/Users/pc1/Documents/Python/btt/instagram_followers/instagram.png'
-    raw = {"text": str(followers_count),
+    raw = {"text": "{} ({})".format(str(followers_count),updated_time),
            "icon_path": icon_path,
            "font_size": 15}
     
