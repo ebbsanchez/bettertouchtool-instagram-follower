@@ -5,85 +5,94 @@ from spiderlib import utils
 import random
 import pickle
 import logging
-
-logging.basicConfig(level=logging.DEBUG)
-# DEBUG / INFO / WARNING / ERROR / CRITICAL
+from proxy_collector import ProxyCollector
 
 
-class Spider:
+
+class IgSpider:
     def __init__(self):
         logging.info('Starting Spider.')
 
     def get_followers_count(self, username):
         logging.info('Start getting followers count.')
-        try:
+        try: # own ip (without proxy)
+            
             logging.info('Using own ip...')
-            request_followers(username)
-        except failedException as e:
-            logging.info('Failed with own ip...')
+            # self.request_followers(username)
+            raise AttributeError # just for testing. must be deleted.
+        except AttributeError as e:
+            # Now use proxies
+            logging.info('[X]Failed with own ip...')
             logging.info('Trying some used & worked proxy...')
-            proxies = get_local_proxies()
-            while len(proxies) != 0:
-                proxy = random.choose(proxies)
-                try:
-                    get_followers_count(proxy=proxy)
-                    break
-                except failedException as e:
-                    proxies.remove(proxy)
-            else:
-                logging.info('Still not getting data...')
-                logging.info("Fetching some proxies from: pubproxies.com. ")
-                proxy_gen = get_pubproxies(limit=5)
-                for proxy in proxy_gen:
+            logging.debug("Failed log: {}".format(e))
+            while True:
+                proxies = proxyman.return_proxies(limit=10)
+                while len(proxies) != 0:
+                    proxy = random.choice(proxies)
+                    logging.debug(" Trying proxy: {}".format(proxy))
                     try:
-                        get_followers_count(proxy=proxy)
-                        break
-                    except failedException as e:
+                        followers_count = self.request_followers(username, proxy=proxy)
+                        logging.info('[VVV]GET FOLLOWERS COUNT!!!'+ str(followers_count))
+                        proxyman.add_proxy(proxy, status_for_projects="alive")
+                        return followers_count
+                    except AttributeError as e:
+                        logging.debug(e)
+                        logging.info('[X] ERROR!! Must been redirect to Login Page.')
+                        proxies.remove(proxy)
+                    except requests.exceptions.ProxyError as e:
+                        logging.info("[X] Failed. Changing proxy...")
                         proxies.remove(proxy)
 
     def request_followers(self, username, proxy=None):
-        url = "https://www.instagram.com/{}/".format(username)
-        req = requests.get(url)
-        soup = bs.BeautifulSoup(req.text, parser)
-        try:
-            ld = get_ld_json(soup)
-            followers_count = ld['mainEntityofPage']['interactionStatistic']['userInteractionCount']
-        except AttributeError as e:
-            logging.info('ERROR!! Must been redirect to Login Page.')
+        if proxy != None:
+            logging.debug(" Proxy detected & used: {}".format(proxy))
+            
+            # First Test if proxy is working. 
+            try:
+                logging.debug
+                proxyman.get_my_ip(proxy=proxy)
+            except requests.exceptions.ProxyError as e:
+                logging.debug("[X] ProxyError: {}".format(e))
+                logging.info("[X] Proxy not working, Please change proxy.")
+                proxyman.add_proxy(proxy, status="dead")
+                raise requests.exceptions.ProxyError
+            
+            # Formatting
+            proxy = proxyman.format_proxy_with_http(proxy)
+            proxy_scheme = {
+                "http": proxy,
+                "https": proxy,
+            }
+            proxy = proxy_scheme
 
-    def get_ld_json(soup):
+        url = "https://www.instagram.com/{}/".format(username)
+        req = requests.get(url, proxies=proxy)
+        soup = bs.BeautifulSoup(req.text, 'lxml')
+    
+        ld = self.get_ld_json(soup)
+        logging.debug("Get ld+json: {}".format(ld))
+        followers_count = ld['mainEntityofPage']['interactionStatistic']['userInteractionCount']
+        logging.debug("[V] Followers count: {}".format(followers_count))
+    
+        return followers_count
+
+    def get_ld_json(self, soup):
         result_json = json.loads(
             "".join(soup.find("script", {"type": "application/ld+json"}).contents))
-
         return result_json
 
-    def get_my_ip(self, proxy=None):
-        """NOTE: Proxy need to be full path (http://xxx.xxx.xxx.xxx:xxxx) """
-        if proxy == None:
-            pass
-        else:
-            proxy = {
-                'http': proxy,
-                'https': proxy,
-            }
-        req = requests.get('https://api.ipify.org?format=json',proxies=proxy)
-        req_json = json.loads(req.text)
-        logging.debug("My {} is: {}".format('IP', req_json['ip']))
-        return req_json['ip']
 
 
 if __name__ == '__main__':
-    spider = Spider()
-    proxyman = ProxyCollector()
-    username = 'sa____h'
-    # followers_count = spider.get_followers_count(username)
-    # followers_count = spider.request_followers(username)
-    proxy_list = requests.get('https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt').text.split('\n')
-    for index in range(10):
-        proxy = random.choice(proxy_list)
-        proxy = 'http://' + proxy
-        try:
-            spider.get_my_ip(proxy=proxy)
-        except requests.exceptions.ProxyError as e :
-            print('[{}] proxy not working...'.format(index))
-    # print(followers_count)
+    logging.basicConfig(level=logging.DEBUG)
+    logging.debug('This is in debug')
+    # DEBUG / INFO / WARNING / ERROR / CRITICAL
+
+    spider = IgSpider()
+    proxyman = ProxyCollector(filename='proxies')
+    username = 'sa_____h'
+    followers_count = spider.get_followers_count(username)
+    print(followers_count)
+
+
+
