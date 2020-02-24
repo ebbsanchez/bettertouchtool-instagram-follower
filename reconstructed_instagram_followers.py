@@ -81,18 +81,41 @@ class IgSpider:
             "".join(soup.find("script", {"type": "application/ld+json"}).contents))
         return result_json
 
+def btt_logic():
+    #  Read last output and update BTT
+    try:
+        with open('last_output.pkl','rb') as f:
+            raw = pickle.load(f)            
+            print(json.dumps(raw))
+    except FileNotFoundError as e:
+        pass
 
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    logging.debug('This is in debug')
-    # DEBUG / INFO / WARNING / ERROR / CRITICAL
-
+    # Try to get newest followers_count (it might take long)
     spider = IgSpider()
     proxyman = ProxyCollector(filename='proxies')
     username = 'sa_____h'
     followers_count = spider.get_followers_count(username)
-    print(followers_count)
+    
+    # Formated for btt 
+    icon_path = '/Users/pc1/Documents/Python/btt/instagram_followers/instagram.png'
+    raw = {"text": str(followers_count),
+           "icon_path": icon_path,
+           "font_size": 15}
+    
+    # Write to pickle for next display
+    with open('last_output.pkl','wb') as f:
+        pickle.dump(raw, f)
+    
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.CRITICAL)
+    btt_logic()
+    # spider = IgSpider()
+    # proxyman = ProxyCollector(filename='proxies')
+    # username = 'sa_____h'
+    # followers_count = spider.get_followers_count(username)
+    
 
 
 
