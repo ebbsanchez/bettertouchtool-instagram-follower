@@ -3,7 +3,7 @@ import pandas as pd
 import logging
 import json
 from datetime import datetime
-
+import math
 
 class ProxyCollector:
     def __init__(self, filename, dont_init=False):
@@ -45,6 +45,7 @@ class ProxyCollector:
         return req_json['ip']
 
     def format_proxy_with_http(self, proxy):
+        logging.debug("proxy= {}".format(proxy))
         if proxy.startswith('http://'):
             return proxy
         else:
@@ -142,7 +143,7 @@ class ProxyCollector:
     def return_proxies(self, limit=1, status="", status_for_projects=""):
         # TODO: Add 'updated_time' filter
         # QUIESTION: What if there is no proxy in DB?
-        # TODO: Notify user if there is no proxy.
+        # TODO: Notify user if there is no proxy. -> It return Nan
         if status != "":
             result_df = self.proxies_df.loc[self.proxies_df['status'] == status]
         else:
@@ -154,7 +155,12 @@ class ProxyCollector:
 
         result_series = result_df.sample(n=limit)['ip:port']
         result_list = result_series.to_list()
-        return result_list
+        
+        if math.isnan(result_list[0]):
+            logging.critical("There is no proxy anymore..")
+            raise Exception
+        else:
+            return result_list
 
     def clean_duplicated_proxy(self, proxy):  # For bug fixing
         to_delete_df = self.proxies_df.loc[self.proxies_df['ip:port'] == proxy]
